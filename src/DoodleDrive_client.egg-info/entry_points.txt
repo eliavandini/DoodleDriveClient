@@ -1,0 +1,2 @@
+[console_scripts]
+DoodleDrive = DoodleDriveClient.main:main

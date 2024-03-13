@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: DoodleDrive-client
+Version: 0.0.1
+Summary: command line interface for my DoodleDrive project
+Author-email: Elia Vandini <vandini.elia@gmial.com>
+Project-URL: Repository, https://github.com/eliavandini/DoodleDriveClient
+Project-URL: Bug Tracker, https://github.com/eliavandini/DoodleDriveClient/issues
+Keywords: DoodleDrive
+Classifier: Development Status :: 4 - Beta
+Classifier: Programming Language :: Python
+Requires-Python: >=3.8
+Description-Content-Type: text/x-rst
+Requires-Dist: pyserial
+Requires-Dist: halo

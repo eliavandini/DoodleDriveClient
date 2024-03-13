@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "DoodleDrive-client"
+version = "0.0.1"
+dependencies = [
+  "pyserial",
+  "halo",
+]
+requires-python = ">=3.8"
+authors = [
+  {name = "Elia Vandini", email = "vandini.elia@gmial.com"},
+]
+description = "command line interface for my DoodleDrive project"
+readme = "README.rst"
+license = {file = "LICENSE.txt"}
+keywords = ["DoodleDrive"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+[project.urls]
+Repository = "https://github.com/eliavandini/DoodleDriveClient"
+"Bug Tracker" = "https://github.com/eliavandini/DoodleDriveClient/issues"
+
+[project.scripts]
+DoodleDrive = "DoodleDriveClient.main:main"

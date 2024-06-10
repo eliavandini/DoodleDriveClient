@@ -27,7 +27,7 @@ class AntColony:
             if self.stop:
                 break
             all_paths = self.generate_solutions()
-            if i == self.n_iterations//3*2:
+            if i > self.n_iterations//3*2:
                 all_paths.append(self.untagle(self.global_best_path))
             self.update_pheromone(all_paths)
             current_best_path, current_best_distance = self.get_best_path(all_paths)
@@ -35,7 +35,8 @@ class AntColony:
                 self.global_best_path = current_best_path
                 self.global_best_distance = current_best_distance
                 print(f"Iteration {i+1}: Global Best Distance: {self.global_best_distance} [{time.time()-self.start_time} s]")
-                # time.sleep(0.5)
+                time.sleep(0.5)
+                self.start_time += 0.5
             self.pheromone *= self.decay_rate
         
         print(f"finished at iteration {i+1}: Global Best Distance: {self.global_best_distance} [{time.time()-self.start_time} s]")

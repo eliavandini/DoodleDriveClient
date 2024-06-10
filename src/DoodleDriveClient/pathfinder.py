@@ -36,7 +36,7 @@ clock = pygame.time.Clock()
 is_running = True
 
 ROWS = 14
-COLUMNS = 10
+COLUMNS = 8
 
 
 def generate_preset1():
@@ -100,7 +100,24 @@ def generate_preset2():
             for x in range(COLUMNS):
                 preset.append((x, ROWS-1))
     return preset
-presets = [generate_preset1(), generate_preset2()]
+
+def generate_preset3():
+    preset = []
+    # if (ROWS//2)%2:
+    for x in range(COLUMNS):
+        preset.append((x, 0))
+    # else:
+    #     for x in range(COLUMNS):
+    #         preset2.append((COLUMNS-1-x, 0))
+
+    for y in range(ROWS):
+        for x in range(COLUMNS):
+            if not (y//2)%2:
+                preset.append((COLUMNS-x-1, y))
+            else:
+                preset.append((x, y))
+    return preset
+presets = [generate_preset1(), generate_preset2(), generate_preset3()]
 
 # for i in presets:
 #     for x in i:
@@ -143,7 +160,7 @@ grid = [
 
 # for i in grid:
 #     print(i.x, i.y)
-string = "Elia Vandini"
+string = "abcdefghilnm"
 ba = bitarray.bitarray()
 ba.frombytes(string.encode('utf-8'))
 word_mask = ba.tolist()
@@ -154,7 +171,8 @@ preset = []
 selected = [grid_pos(0), grid_pos((COLUMNS*ROWS)-1)]
 # selected = []
 # stm_points = [[0,1], [0,0], [1,0], [1,1], [2,1], [2,0], [3,0], [3,1], [4,1], [4,0], [5,0], [5,1], [6,1], [6,0], [7,0], [7,1], [8,1], [8,0], [9,0], [9,1], [9,3], [9,2], [8,2], [8,3], [7,3], [7,2], [6,2], [6,3], [5,3], [5,2], [4,2], [4,3], [3,3], [3,2], [2,2], [2,3], [1,3], [1,2], [0,2], [0,3], [0,5], [0,4], [1,4], [1,5], [2,5], [2,4], [3,4], [3,5], [4,5], [4,4], [5,4], [5,5], [6,5], [6,4], [7,4], [7,5], [8,5], [8,4], [9,4], [9,5], [9,7], [9,6], [8,6], [8,7], [7,7], [7,6], [6,6], [6,7], [5,7], [5,6], [4,6], [4,7], [3,7], [3,6], [2,6], [2,7], [1,7], [1,6], [0,6], [0,7], [0,9], [0,8], [1,8], [1,9], [2,9], [2,8], [3,8], [3,9], [4,9], [4,8], [5,8], [5,9], [6,9], [6,8], [7,8], [7,9], [8,9], [8,8], [9,8], [9,9], [9,11], [9,10], [8,10], [8,11], [7,11], [7,10], [6,10], [6,11], [5,11], [5,10], [4,10], [4,11], [3,11], [3,10], [2,10], [2,11], [1,11], [1,10], [0,10], [0,11], [0,13], [0,12], [1,12], [1,13], [2,13], [2,12], [3,12], [3,13], [4,13], [4,12], [5,12], [5,13], [6,13], [6,12], [7,12], [7,13], [8,13], [8,12], [9,12], [9,13], ]
-# stm_points = [(1, 0), (2, 0), (2, 2), (3, 2), (3, 3), (4, 3), (5, 2), (6, 2), (7, 3), (6, 4), (5, 4), (5, 5), (4, 5), (3, 5), (2, 4), (1, 4), (0, 5), (0, 6), (1, 7), (1, 8), (2, 8), (2, 9), (3, 9), (3, 10), (3, 11), (3, 12), (2, 12), (1, 12), (1, 13), (0, 13), (0, 11), (0, 10), (0, 9), (1, 10), (4, 8), (4, 7), (3, 7), (5, 6), (6, 6), (6, 7), (6, 8), (7, 8), (7, 9), (8, 9), (8, 10), (8, 11), (7, 11), (6, 11), (6, 10), (5, 10), (4, 11), (5, 13), (9, 12), (9, 11), (9, 10), (9, 8), (8, 7), (8, 6), (8, 5), (7, 5), (9, 4), (9, 3), (9, 2), (8, 1), (9, 0), (7, 0), (7, 1), (4, 1), (0, 1), (1, 0)]
+# stm_points = [[0,0], [5,0], [6,0], [1,1], [5,1], [6,1], [0,2], [1,2], [5,2], [6,2], [2,3], [5,3], [6,3], [0,4], [2,4], [5,4], [6,4], [1,5], [2,5], [5,5], [6,5], [0,6], [1,6], [2,6], [5,6], [6,6], [3,7], [5,7], [6,7], [0,8], [3,8], [5,8], [6,8], [2,9], [3,9], [5,9], [6,9], [0,10], [2,10], [3,10], [5,10], [6,10], [1,11], [2,11], [3,11], [5,11], [6,11], ] 
+
 
 # Example usage:
 num_points = 10
@@ -174,12 +192,20 @@ for i in range(get_array_pos(*selected[0]), get_array_pos(*selected[1])+1):
             return default
     if safe_list_get(word_mask, i-get_array_pos(*selected[0]), 0):
         random_points.append((grid[i].x, grid[i].y))
-        grid[get_array_pos(grid[i].x, grid[i].y)].value = 1
+        grid[get_array_pos(grid[i].x, grid[i].y)].value = 1 
 # random_points = generate_random_points(num_points, min_coord, max_coord)
 # random_points = [(1, 0), (2, 0), (7, 0), (1, 1), (2, 1), (6, 1), (1, 2), (2, 2), (6, 2), (7, 2), (1, 3), (2, 3), (5, 3), (1, 4), (2, 4), (5, 4), (7, 4), (1, 5), (2, 5), (5, 5), (6, 5), (1, 6), (2, 6), (5, 6), (6, 6), (7, 6), (1, 7), (2, 7), (4, 7), (1, 8), (2, 8), (4, 8), (7, 8), (1, 9), (2, 9), (4, 9), (6, 9), (1, 10), (2, 10), (4, 10), (6, 10), (7, 10), (1, 11), (2, 11), (4, 11), (5, 11), (1, 12), (2, 12), (4, 12), (5, 12), (7, 12), (1, 13), (2, 13), (4, 13), (5, 13), (6, 13)]
 # random_points = [(i%COLUMNS, i//COLUMNS) for i in range(111)]
 
-setpoint = [(1, 0), (2, 0), (2, 1), (2, 2), (3, 2), (3, 3), (4, 3), (5, 3), (5, 2), (5, 1), (5, 0), (4, 0), (0, 1), (0, 2), (1, 3), (1, 4), (2, 4), (3, 5), (5, 5), (6, 4), (7, 3), (6, 2), (7, 1), (8, 1), (9, 0), (9, 3), (9, 4), (9, 5), (8, 5), (7, 5), (7, 6), (6, 6), (5, 6), (7, 7), (8, 7), (9, 8), (8, 9), (7, 9), (6, 10), (5, 10), (5, 9), (5, 8), (4, 8), (4, 7), (3, 7), (3, 6), (2, 6), (1, 6), (0, 7), (1, 8), (2, 8), (2, 9), (2, 10), (3, 10), (3, 11), (4, 11), (4, 12), (5, 12), (5, 13), (7, 13), (8, 13), (9, 12), (8, 11), (2, 13), (0, 13), (1, 12), (2, 12), (1, 11), (0, 10), (0, 9), (0, 5)]
+setpoint =  [[7,0], [6,1], [6,2], [7,2], [5,3], [5,4], [5,5], [5,6], [6,6], [6,5], [7,4], [7,6], [7,8], [7,10], [6,11], [5,11], [4,11], [4,10], [4,9], [2,8], [2,9], [2,10], [2,11], [1,11], [1,10], [1,9], [1,8], [1,7], [1,6], [1,5], [1,4], [1,3], [1,2], [1,1], [1,0], [2,0], [2,1], [2,2], [2,3], [2,4], [2,5], [2,6], [2,7], [4,7], [4,8], [5,9], [5,10], ] 
+
+
+
+way_preset = []
+for i, p in enumerate(presets[0]):
+    if p in random_points:
+        way_preset.append(p)
+
 
 # def is_intersection(p1, p2, p3, p4):
 #     """Check if line segment (p1,p2) intersects (p3,p4)."""
@@ -229,16 +255,29 @@ setpoint = [(1, 0), (2, 0), (2, 1), (2, 2), (3, 2), (3, 3), (4, 3), (5, 3), (5, 
 # print(random_points)
 # print(distances)
 
-n_ants = 50
-n_iterations = 35
-decay_rate = 0.005
+n_ants = 10
+n_iterations = 20
+decay_rate = 0.2
 alpha = 1
 beta = 2
 rho = 0.1
 
+print(random_points)
 aco = ant_colony.AntColony(random_points, n_ants, n_iterations, decay_rate, alpha, beta, rho)
 t = threading.Thread(target=aco.run)
 t.start()
+
+
+def calculate_distance(path):
+    distance = 0
+    for i in range(len(path) - 1):
+        current_city, next_city = path[i], path[i + 1]
+        distance += ant_colony.calculate_distance(current_city, next_city)
+    return distance
+
+# print(calculate_distance(sorted(random_points, key=lambda x: presets[0].index(x))))
+# print(calculate_distance(sorted(random_points, key=lambda x: presets[1].index(x))))
+# print(calculate_distance(sorted(random_points, key=lambda x: presets[2].index(x))))
 
 # print("Global Best Path:", [random_points[i] for i in aco.global_best_path])
 # stm_points = [random_points[i] for i in aco.global_best_path]
@@ -276,14 +315,17 @@ while is_running:
     
     screen.fill(BLACK)
     canvas.fill(BLACK)
-    try:
-        pygame.draw.lines(canvas, (0, 0, 255), False, [get_screen_pos(*i) for i in [random_points[x] for x in aco.global_best_path]], width=9)
-    except Exception as e:
-        pass
-    # try:
-    #     pygame.draw.lines(canvas, (0, 0, 255), False, [get_screen_pos(*i) for i in setpoint], width=9)
-    # except Exception as e:
-    #     pass
+    keys = pygame.key.get_pressed()
+    if not keys[pygame.K_1] and not keys[pygame.K_2] and not keys[pygame.K_3] and not keys[pygame.K_4] and not keys[pygame.K_5] and not keys[pygame.K_6] and not keys[pygame.K_6]:
+        try:
+            pygame.draw.lines(canvas, (0, 0, 255), False, [get_screen_pos(*i) for i in [random_points[x] for x in aco.global_best_path]], width=9)
+        except Exception as e:
+            pass
+    if keys[pygame.K_1]:
+        try:
+            pygame.draw.lines(canvas, (255, 0, 0), False, [get_screen_pos(*i) for i in way_preset], width=3)
+        except Exception as e:
+            pass
     # try:
     #     pygame.draw.lines(canvas, (0, 255, 255), False, [get_screen_pos(*i) for i in untangled], width=3)
     # except Exception as e:

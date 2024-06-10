@@ -8,6 +8,8 @@ from halo import Halo
 import fancybar
 from fancybar import ProgressBar
 
+# from fancybar.progressbar import ProgressBar
+
 startbyte = b"\xD8"
 endbyte = b"\xE4"
 startbyte_dec = 218
@@ -71,7 +73,7 @@ def find_port():
     else:
         return ports[0].device
 
-memory_size = 20
+memory_size = (10 *15) // 8
 serial_reading = True
 
 def get_bit(value, bit_index):
@@ -87,22 +89,27 @@ def display_help():
     print("""
 \x1B[1mHelp:
     Operations\x1B[0m
-    s   save a string to memory
-    f   free some memory
-    r   read from memory 
-    m   display memory map
+    s | save      save a string to memory
+    f | free      free some memory
+    r | read      read from memory 
+    m | map       display memory map
     
     \x1B[1mRuntime Operations\x1B[0m
-    C   monitor process
-    p   pause process
-    o   resume process
-    t   restart process
-    a   abort process
+    z | result    display what has been read
+    c | status    monitor process
+    p | pause     pause process
+    o | resume    resume process
+    t | restart   restart process
+    a | abort     abort process
+    
+    \x1B[1mAdvanced\x1B[0m
+    w | walk      walk motor to position
+    e | edge      reallign with limiters
     
     \x1B[1mMisc\x1B[0m
-    h   display the HELP screen
-    l   change the log verbose level
-    q   quit
+    h | help      display the HELP screen
+    l | log       change the log verbose level
+    q | quit      quit
           """)
 
 def print_bytearr(data:bytearray):
@@ -113,6 +120,16 @@ def print_bytearr(data:bytearray):
     
 def is_ascii(s):
     return all(c in string.printable for c in s)
+                                                                                                 
+def exception_handler(func): 
+    def wrapper(*arg, **kwargs):
+        try:
+            func(*arg, **kwargs)
+        except KeyboardInterrupt:
+            pass
+        except Exception as e:
+            print(e)
+    return wrapper
 
 def parse_memory_range(inp):
     try:
@@ -215,38 +232,48 @@ def wait_for_ping(ok=False, silent=False):
         raise Exception(f"expected {'ok' if ok else 'ping'} , got {proc_id, Instruction, data} instead")
     return proc_id, Instruction, data
     
-        
-def save_to_memory():
-    a, b = parse_memory_range(input("\x1B[1menter section to write to \x1B[0m(\x1B[2mstart index\x1B[0m:\x1B[2mstop index\x1B[0m):\n"))
-    input_str = input(f"enter an ascii string (max {abs(b-a)} bytes)")
+@exception_handler
+def save_to_memory(pos=None, input_str=None):
+    if pos is None or input_str is None:
+        a, b = parse_memory_range(input("\x1B[1menter section to write to \x1B[0m(\x1B[2mstart index\x1B[0m:\x1B[2mstop index\x1B[0m):\n"))
+        input_str = input(f"enter an ascii string (max {abs(b-a)} bytes): ")
+    else:
+        a, b = parse_memory_range(pos)
     if not is_ascii(input_str):
         print("ERROR: Failed to Decode to ASCII")
         return
     print(print_bytearr(bytearray(input_str, "ascii")))
     if len(input_str) > abs(b-a):
         print(f"ERROR: Input is too long (max is {abs(b-a)})")
+        return
 
     proc_id, Instruction, data = wait_for_ping()
     send_to_stm(proc_id, INSTRUCTION_SEND_BUFF, bytearray([a, a+len(input_str)])+input_str.encode("ascii"))
     wait_for_ping(ok=True)
     
-    
-def free_memory():
-    a, b = parse_memory_range(input("\x1B[1menter section to free \x1B[0m(\x1B[2mstart index\x1B[0m:\x1B[2mstop index\x1B[0m):\n"))
-    
+@exception_handler
+def free_memory(pos=None):
+    if pos is None:
+        a, b = parse_memory_range(input("\x1B[1menter section to write to \x1B[0m(\x1B[2mstart index\x1B[0m:\x1B[2mstop index\x1B[0m):\n"))
+    else:
+        a, b = parse_memory_range(pos)   
     
     proc_id, Instruction, data = wait_for_ping()
     send_to_stm(proc_id, INSTRUCTION_FREE_MEM, bytearray([a, b]))
     wait_for_ping(ok=True)
-    
-def read_memory():
-    a, b = parse_memory_range(input("\x1B[1menter section to read \x1B[0m(\x1B[2mstart index\x1B[0m:\x1B[2mstop index\x1B[0m):\n"))
-    
+
+@exception_handler
+def read_memory(pos=None):
+    if pos is None:
+        a, b = parse_memory_range(input("\x1B[1menter section to write to \x1B[0m(\x1B[2mstart index\x1B[0m:\x1B[2mstop index\x1B[0m):\n"))
+    else:
+        a, b = parse_memory_range(pos)  
     
     proc_id, Instruction, data = wait_for_ping()
     send_to_stm(proc_id, INSTRUCTION_READ, bytearray([a, b]))
     wait_for_ping(ok=True)
 
+@exception_handler
 def result():
     proc_id, Instruction, data = wait_for_ping()
     send_to_stm(proc_id, INSTRUCTION_RESULT)
@@ -258,23 +285,25 @@ def result():
             print(f"stm read buffer: {print_bytearr(data)}")
     else:
         raise Exception(f"expected INSTRUCTION_READ got proc_id:{proc_id}, instruction:{Instruction}, data:{data}")
-    
+
+@exception_handler
 def display_memory():
     proc_id, Instruction, data = wait_for_ping()
     send_to_stm(proc_id, INSTRUCTION_MEMORY_MAP)
     proc_id, Instruction, data = recive_from_stm()
     print(recive_from_stm())
-    for i in data:
-        for x in range(8):
-            if get_bit(i, x):
-                print("#", end="")
-            else:
-                print("_", end="")
-        print()
+    for index, i in enumerate(data):
+        if index % 8 == 0:
+            print(f"\n\x1B[1m{index:04X}: \x1B[0m", end="")
+        if i:
+            print("#", end="")
+        else:
+            print("_", end="")
     
     
     # print("recived:", proc_id, Instruction, data)
-    
+
+@exception_handler
 def status_op():
     # args = {"length":250, "bartype":"gradient", "spinner":"dots12", "start_color":(0, 255, 255), "end_color":(0, 255, 0), "spinner_fg_color":(0, 255, 255), "spinner_speed":0.1}
     proc_id, Instruction, data = wait_for_ping()
@@ -282,10 +311,11 @@ def status_op():
     proc_id, Instruction, data = recive_from_stm()
     value = struct.unpack(">BHH", data)
     last_state = value[0]
-    last_max_prog = -value[2]
+    last_max_prog = value[2]
     
     run_thread = True
     bar = ProgressBar(last_max_prog, length=250, bartype="gradient", spinner="dots12", start_color=(0, 255, 255), end_color=(0, 255, 0), spinner_fg_color=(0, 255, 255), spinner_speed=0.1, item_name="STATUS")
+    bar.items_done_at_start = value[1]
     bar.start()
     def func():
         while run_thread:
@@ -335,27 +365,31 @@ def status_op():
     thread.join()
         
         
-
+@exception_handler
 def pause_op():
     proc_id, Instruction, data = wait_for_ping()
     send_to_stm(proc_id, INSTRUCTION_PAUSE)
     wait_for_ping(ok=True)
-    
+
+@exception_handler
 def resume_op():
     proc_id, Instruction, data = wait_for_ping()
     send_to_stm(proc_id, INSTRUCTION_RESUME)
     wait_for_ping(ok=True)
-
+    
+@exception_handler
 def restart_op():
     proc_id, Instruction, data = wait_for_ping()
     send_to_stm(proc_id, INSTRUCTION_RESTART)
     wait_for_ping(ok=True)
 
+@exception_handler
 def abort_op():
     proc_id, Instruction, data = wait_for_ping()
     send_to_stm(proc_id, INSTRUCTION_ABORT)
     wait_for_ping(ok=True)
 
+@exception_handler
 def walk(id=None, goal=None):
     if id is None and goal is None:
         p = [int(input("enter motor id: ")), int(input("enter goal post: "))]
@@ -365,6 +399,7 @@ def walk(id=None, goal=None):
     send_to_stm(proc_id, INSTRUCTION_WALK, bytearray(p))
     wait_for_ping(ok=True)
 
+@exception_handler
 def edge():
     proc_id, Instruction, data = wait_for_ping()
     send_to_stm(proc_id, INSTRUCTION_EDGE)
@@ -390,7 +425,8 @@ def edge():
     #         print()
     # print()  # Move to the next line after each row
     # pass
-    
+
+@exception_handler
 def change_log_level():
     # mal schauen ob ich wirklich lust habe das zu implementieren oder überhaupt brauche.
     # villeicht implementiere ich es trotzdem nur zur vorstellung programmiere einen dummy log mit fake logs
@@ -409,10 +445,16 @@ def main():
             match inp.split():
                 case ["h"] | ["help"]:
                     display_help()
+                case ["s", pos, string] | ["save", pos, string]:
+                    save_to_memory(pos, string)
                 case ["s"] | ["save"]:
                     save_to_memory()
+                case ["f", pos] | ["free", pos]:
+                    free_memory(pos)
                 case ["f"] | ["free"]:
                     free_memory()
+                case ["r", pos] | ["read", pos]:
+                    read_memory(pos)
                 case ["r"] | ["read"]:
                     read_memory()
                 case ["z"] | ["result"]:
